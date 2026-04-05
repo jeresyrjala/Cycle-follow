@@ -1,1 +1,459 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sykli">
+<title>Sykli</title>
+<link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3lrbGkiLCJzaG9ydF9uYW1lIjoiU3lrbGkiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsImJhY2tncm91bmRfY29sb3IiOiIjMGYwZjBmIiwidGhlbWVfY29sb3IiOiIjMGYwZjBmIn0=">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,300&display=swap');
 
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --phase-menstrual: #c44d56;
+    --phase-follicular: #e8a849;
+    --phase-ovulation: #6cc070;
+    --phase-luteal: #7b8fc4;
+    --bg: #0f0f0f;
+    --card: #1a1a1a;
+    --text: #f0ece4;
+    --text-dim: #8a8580;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    overflow-x: hidden;
+    padding: 0 0 env(safe-area-inset-bottom) 0;
+  }
+
+  .container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 20px 20px 100px;
+  }
+
+  /* ---- HEADER ---- */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-top: env(safe-area-inset-top, 12px);
+  }
+  .header h1 {
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .settings-btn {
+    background: none; border: none; color: var(--text-dim); font-size: 20px; cursor: pointer;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; transition: background 0.2s;
+  }
+  .settings-btn:hover { background: rgba(255,255,255,0.06); }
+
+  /* ---- PHASE HERO ---- */
+  .phase-hero {
+    border-radius: 24px;
+    padding: 32px 24px 28px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 16px;
+    transition: background 0.6s ease;
+  }
+  .phase-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%; right: -20%;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    filter: blur(40px);
+  }
+  .phase-emoji {
+    font-size: 42px;
+    margin-bottom: 12px;
+    display: block;
+    animation: floatIn 0.8s ease-out;
+  }
+  @keyframes floatIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .phase-name {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .phase-day {
+    font-size: 14px;
+    font-weight: 300;
+    color: rgba(240,236,228,0.6);
+    margin-bottom: 16px;
+  }
+
+  /* ---- PROGRESS RING ---- */
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 8px;
+  }
+  .ring-wrap {
+    width: 52px; height: 52px; flex-shrink: 0;
+  }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-bg { stroke: rgba(255,255,255,0.08); }
+  .ring-fg { transition: stroke-dashoffset 1s ease, stroke 0.6s ease; }
+  .progress-text {
+    font-size: 13px;
+    color: rgba(240,236,228,0.55);
+    line-height: 1.5;
+  }
+  .progress-text strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ---- TIP CARD ---- */
+  .tip-card {
+    background: var(--card);
+    border-radius: 18px;
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+    animation: slideUp 0.5s ease-out both;
+  }
+  .tip-card:nth-child(2) { animation-delay: 0.08s; }
+  .tip-card:nth-child(3) { animation-delay: 0.16s; }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .tip-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+  .tip-text {
+    font-size: 15px;
+    line-height: 1.55;
+    font-weight: 300;
+    color: rgba(240,236,228,0.85);
+  }
+
+  /* ---- TIMELINE ---- */
+  .timeline {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 28px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .timeline-seg {
+    height: 6px;
+    border-radius: 3px;
+    transition: all 0.5s ease;
+    position: relative;
+  }
+  .timeline-seg.active {
+    height: 10px;
+    margin-top: -2px;
+    box-shadow: 0 0 12px rgba(255,255,255,0.15);
+  }
+
+  /* ---- SETUP MODAL ---- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: #1c1c1e;
+    border-radius: 24px;
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 380px;
+    margin-bottom: env(safe-area-inset-bottom, 20px);
+    animation: slideModal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes slideModal {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .modal h2 {
+    font-size: 22px; font-weight: 700; margin-bottom: 6px;
+  }
+  .modal p {
+    font-size: 14px; color: var(--text-dim); margin-bottom: 24px; line-height: 1.5;
+  }
+  .modal label {
+    font-size: 12px; font-weight: 500; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--text-dim); display: block; margin-bottom: 8px;
+  }
+  .modal input[type="date"],
+  .modal input[type="number"] {
+    width: 100%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    margin-bottom: 16px;
+    -webkit-appearance: none;
+  }
+  .modal input:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.25);
+  }
+  .modal input::-webkit-calendar-picker-indicator {
+    filter: invert(0.7);
+  }
+  .save-btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--phase-ovulation), #4da850);
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .save-btn:active { transform: scale(0.97); opacity: 0.9; }
+
+  /* ---- SECTION LABEL ---- */
+  .section-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script>
+const PHASES = [
+  {
+    key: 'menstrual',
+    name: 'Kuukautiset',
+    emoji: '🌙',
+    color: '#c44d56',
+    bg: 'linear-gradient(145deg, #2a1418, #1a1a1a)',
+    days: [1, 5],
+    mood: 'Energiataso matala, mahdollisesti kipuja',
+    action: 'Ota kotihommista isompi vastuu. Tarjoa lämpötyynyä, peittoilta ja comfort foodia. Anna tilaa levätä.',
+    love: 'Hellä kosketus, rauhallisuus. Älä ota mielialan muutoksia henkilökohtaisesti.'
+  },
+  {
+    key: 'follicular',
+    name: 'Follikulaarivaihe',
+    emoji: '🌱',
+    color: '#e8a849',
+    bg: 'linear-gradient(145deg, #221c10, #1a1a1a)',
+    days: [6, 13],
+    mood: 'Energia nousee, luovuus ja sosiaalisuus kasvavat',
+    action: 'Suunnittele treffi-iltoja, reissuja tai sosiaalista ohjelmaa. Hyvä aika uusille ideoille.',
+    love: 'Spontaanius ja seikkailu toimii nyt. Hyvä hetki kokeilla uutta yhdessä.'
+  },
+  {
+    key: 'ovulation',
+    name: 'Ovulaatio',
+    emoji: '✨',
+    color: '#6cc070',
+    bg: 'linear-gradient(145deg, #141f14, #1a1a1a)',
+    days: [14, 16],
+    mood: 'Energiahuippu, itsevarmuus ja libido korkeimmillaan',
+    action: 'Tärkeät keskustelut ja yhteiset aktiviteetit. Hyvä aika puhua tulevaisuudesta.',
+    love: 'Hyvä hetki romantiikalle ja yhteisille hetkille. Näytä arvostusta.'
+  },
+  {
+    key: 'luteal',
+    name: 'Luteaalivaihe',
+    emoji: '🍂',
+    color: '#7b8fc4',
+    bg: 'linear-gradient(145deg, #141620, #1a1a1a)',
+    days: [17, 28],
+    mood: 'Energia laskee, herkkyys ja ärtyneisyys voivat lisääntyä',
+    action: 'Vältä turhia konflikteja. Pidä suklaa- ja snackvarastot täynnä. Tarjoa tukea ilman neuvoja.',
+    love: 'Kärsivällisyys on nyt supervoimasi. Kuuntele, älä ratkaise.'
+  }
+];
+
+function getState() {
+  try {
+    const s = localStorage.getItem('sykli_state');
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+function setState(obj) {
+  localStorage.setItem('sykli_state', JSON.stringify(obj));
+}
+
+function getCycleDay(startDate, cycleLen) {
+  const start = new Date(startDate);
+  const now = new Date();
+  start.setHours(0,0,0,0);
+  now.setHours(0,0,0,0);
+  const diff = Math.floor((now - start) / 86400000);
+  const day = (diff % cycleLen) + 1;
+  return day < 1 ? cycleLen + day : day;
+}
+
+function getPhase(day, cycleLen) {
+  // Scale phases proportionally to cycle length
+  const scale = cycleLen / 28;
+  for (let i = PHASES.length - 1; i >= 0; i--) {
+    const start = Math.round((PHASES[i].days[0] - 1) * scale) + 1;
+    if (day >= start) return { ...PHASES[i], scaledStart: start, scaledEnd: i < PHASES.length - 1 ? Math.round((PHASES[i+1].days[0] - 1) * scale) : cycleLen };
+  }
+  return PHASES[0];
+}
+
+function getNextPeriod(startDate, cycleLen) {
+  const start = new Date(startDate);
+  const now = new Date();
+  start.setHours(0,0,0,0);
+  now.setHours(0,0,0,0);
+  const diff = Math.floor((now - start) / 86400000);
+  const daysInto = diff % cycleLen;
+  const daysLeft = cycleLen - daysInto;
+  return daysLeft === cycleLen ? 0 : daysLeft;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  const state = getState();
+
+  if (!state) {
+    renderSetup(app);
+    return;
+  }
+
+  const { startDate, cycleLen } = state;
+  const day = getCycleDay(startDate, cycleLen);
+  const phase = getPhase(day, cycleLen);
+  const nextPeriod = getNextPeriod(startDate, cycleLen);
+  const progress = day / cycleLen;
+  const circ = 2 * Math.PI * 20;
+  const offset = circ * (1 - progress);
+
+  app.innerHTML = `
+    <div class="header">
+      <h1>Sykli</h1>
+      <button class="settings-btn" id="settingsBtn">⚙</button>
+    </div>
+
+    <div class="phase-hero" style="background: ${phase.bg}">
+      <span class="phase-emoji">${phase.emoji}</span>
+      <div class="phase-name" style="color: ${phase.color}">${phase.name}</div>
+      <div class="phase-day">Päivä ${day} / ${cycleLen}</div>
+      <div class="progress-row">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 44 44" width="52" height="52">
+            <circle class="ring-bg" cx="22" cy="22" r="20" fill="none" stroke-width="3" />
+            <circle class="ring-fg" cx="22" cy="22" r="20" fill="none" stroke="${phase.color}" stroke-width="3"
+              stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round" />
+          </svg>
+        </div>
+        <div class="progress-text">
+          ${nextPeriod === 0
+            ? '<strong>Kuukautiset tänään</strong>'
+            : `Seuraavat kuukautiset <strong>${nextPeriod} pv</strong> päästä`}
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      ${PHASES.map((p, i) => {
+        const scale = cycleLen / 28;
+        const start = Math.round((p.days[0] - 1) * scale) + 1;
+        const end = i < PHASES.length - 1 ? Math.round((PHASES[i+1].days[0] - 1) * scale) : cycleLen;
+        const width = ((end - start + 1) / cycleLen) * 100;
+        const active = day >= start && day <= end;
+        return `<div class="timeline-seg ${active ? 'active' : ''}" style="width:${width}%;background:${p.color};opacity:${active ? 1 : 0.3}"></div>`;
+      }).join('')}
+    </div>
+
+    <div class="section-label">Miten tukea häntä nyt</div>
+
+    <div class="tip-card">
+      <div class="tip-label">🧠 Fiilis</div>
+      <div class="tip-text">${phase.mood}</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-label">💪 Tee näin</div>
+      <div class="tip-text">${phase.action}</div>
+    </div>
+    <div class="tip-card">
+      <div class="tip-label">❤️ Rakkaus</div>
+      <div class="tip-text">${phase.love}</div>
+    </div>
+  `;
+
+  document.getElementById('settingsBtn').addEventListener('click', () => renderSetup(app, true));
+}
+
+function renderSetup(app, isEdit = false) {
+  const state = getState();
+  const today = new Date().toISOString().split('T')[0];
+
+  app.innerHTML = `
+    <div class="modal-overlay">
+      <div class="modal">
+        <h2>${isEdit ? '⚙ Asetukset' : '🌙 Sykli'}</h2>
+        <p>${isEdit ? 'Päivitä kierron tiedot' : 'Aseta kumppanisi viimeisimpien kuukautisten alkupäivä'}</p>
+        <label>Kierron alkupäivä</label>
+        <input type="date" id="startInput" value="${state?.startDate || today}" max="${today}">
+        <label>Kierron pituus (päivää)</label>
+        <input type="number" id="cycleInput" value="${state?.cycleLen || 28}" min="21" max="40">
+        <button class="save-btn" id="saveBtn">Tallenna</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('saveBtn').addEventListener('click', () => {
+    const startDate = document.getElementById('startInput').value;
+    const cycleLen = parseInt(document.getElementById('cycleInput').value) || 28;
+    if (!startDate) return;
+    setState({ startDate, cycleLen: Math.max(21, Math.min(40, cycleLen)) });
+    render();
+  });
+}
+
+render();
+</script>
+</body>
+</html>
